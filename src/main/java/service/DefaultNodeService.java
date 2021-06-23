@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import repository.INodeRepository;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 
 @Service
@@ -19,9 +20,12 @@ public class DefaultNodeService implements INodeService {
     }
 
     @Override
-    public void createNode(@Nonnull String id) {
+    public void createNode(@Nonnull String nodeId, @Nullable String parentId) {
+        if (nodeId.equals(parentId)) {
+            throw new IllegalArgumentException("Same node and parent id " + nodeId);
+        }
         // TODO FIXME maybe check that id not already taken
-        repository.saveNode(id);
+        repository.saveNode(nodeId, parentId);
     }
 
     @Nonnull
@@ -32,7 +36,10 @@ public class DefaultNodeService implements INodeService {
     }
 
     @Override
-    public void updateNodeParent(@Nonnull String nodeId, @Nonnull String newParentId) {
+    public void updateNodeParent(@Nonnull String nodeId, @Nullable String newParentId) {
+        if (nodeId.equals(newParentId)) {
+            throw new IllegalArgumentException("Same node and parent id " + nodeId);
+        }
         // TODO FIXME maybe check that both nodes exist
         repository.updateNodeParent(nodeId, newParentId);
     }

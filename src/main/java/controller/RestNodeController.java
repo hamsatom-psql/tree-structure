@@ -24,7 +24,7 @@ public class RestNodeController {
     @PostMapping(path = "/{id}")
     @Nonnull
     public ResponseEntity<Object> createNode(@PathVariable @Nonnull String id, @RequestParam(required = false) @Nullable String parentId) {
-        service.createNodeUnderParent(id, parentId);
+        service.createNode(id, parentId);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -34,9 +34,9 @@ public class RestNodeController {
         return service.getDescendants(parentId);
     }
 
-    @PutMapping(path = "/{id}/parent/{parentId}")
+    @PutMapping(path = "/{id}")
     @Nonnull
-    public ResponseEntity<Object> changeParent(@PathVariable @Nonnull String id, @PathVariable @Nonnull String parentId) {
+    public ResponseEntity<Object> changeParent(@PathVariable @Nonnull String id, @RequestParam(required = false) @Nullable String parentId) {
         service.updateNodeParent(id, parentId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

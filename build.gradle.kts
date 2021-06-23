@@ -26,6 +26,7 @@ springBoot {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+    exclude("**/*IT.class")
 }
 
 java {

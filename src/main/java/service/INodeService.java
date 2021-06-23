@@ -7,17 +7,10 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public interface INodeService {
-    void createNode(@Nonnull String id);
+    void createNode(@Nonnull String id, @Nullable String parentId);
 
     @Nonnull
     List<Node> getDescendants(@Nonnull String parentId);
 
-    void updateNodeParent(@Nonnull String nodeId, @Nonnull String newParentId);
-
-    default void createNodeUnderParent(@Nonnull String nodeId, @Nullable String parentId) {
-        createNode(nodeId);
-        if (parentId != null) {
-            updateNodeParent(nodeId, parentId);
-        }
-    }
+    void updateNodeParent(@Nonnull String nodeId, @Nullable String newParentId);
 }
