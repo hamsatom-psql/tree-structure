@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.neo4j:neo4j-jdbc-driver:3.5.2")
+    implementation("com.zaxxer", "HikariCP", "4.0.3")
     implementation("io.springfox:springfox-boot-starter:3.0.0")
     implementation("com.google.code.findbugs","jsr305", "3.0.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

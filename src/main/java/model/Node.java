@@ -11,7 +11,9 @@ public class Node implements Serializable {
     @ApiModelProperty(required = true)
     private String id;
     private String parentId;
+    @ApiModelProperty(required = true)
     private String rootId;
+    @ApiModelProperty(required = true)
     private int depth;
 
     @Nonnull
@@ -55,9 +57,5 @@ public class Node implements Serializable {
     public Node setDepth(int depth) {
         this.depth = depth;
         return this;
-    }
-
-    public boolean isInvalid() {
-        return id == null || id.trim().isEmpty();
     }
 }
