@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -26,7 +28,7 @@ import java.util.Optional;
         UserDetailsServiceAutoConfiguration.class
 })
 @ComponentScan(basePackages = {"controller", "service", "repository"})
-public class SpringBootMainClass {
+public class SpringBootMainClass implements WebMvcConfigurer {
 
     public static void main(String[] args) {
         SpringApplication.run(SpringBootMainClass.class, args);
@@ -56,5 +58,14 @@ public class SpringBootMainClass {
                 .version("1.0")
                 .contact(new Contact("Tomas Hamsa", "https://www.linkedin.com/in/tomas-hamsa/", "okularek@centrum.cz"))
                 .build();
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:8000")
+                .allowCredentials(true)
+                .allowedMethods("HEAD", "GET", "POST", "PUT", "OPTIONS")
+                .allowedHeaders("*");
     }
 }
