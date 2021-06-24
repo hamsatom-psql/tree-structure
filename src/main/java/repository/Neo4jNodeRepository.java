@@ -13,7 +13,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Repository("neo4jNodeRepository")
 public class Neo4jNodeRepository implements INodeRepository {
@@ -50,7 +49,7 @@ public class Neo4jNodeRepository implements INodeRepository {
             }
 
             connection.commit();
-        } catch (SQLException | NoSuchElementException e) {
+        } catch (SQLException e) {
             if (connection != null) {
                 connection.rollback();
             }
@@ -67,6 +66,20 @@ public class Neo4jNodeRepository implements INodeRepository {
                 .setId(resultSet.getString("id"))
                 .setDepth(resultSet.getInt("depth"))
                 .setRootId(resultSet.getString("rootId"));
+    }
+
+    @Override
+    public boolean exists(@Nonnull String id) throws SQLException {
+        try (
+                Connection connection = neo4j.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(
+                        "MATCH (n:Node {id: ?}) RETURN n"
+                )
+        ) {
+            preparedStatement.setString(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
+        }
     }
 
     @Nonnull
@@ -111,7 +124,7 @@ public class Neo4jNodeRepository implements INodeRepository {
             }
 
             connection.commit();
-        } catch (SQLException | NoSuchElementException e) {
+        } catch (SQLException e) {
             if (connection != null) {
                 connection.rollback();
             }
@@ -143,9 +156,7 @@ public class Neo4jNodeRepository implements INodeRepository {
         )) {
             statement.setString(1, nodeId);
             statement.setString(2, parentId);
-            if (statement.executeUpdate() <= 0) {
-                throw new NoSuchElementException("Couldn't attach " + nodeId + " to " + parentId);
-            }
+            statement.executeUpdate();
         }
     }
 }

@@ -21,13 +21,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = {IllegalArgumentException.class})
     protected ResponseEntity<Object> handleInvalid(RuntimeException ex, WebRequest request) {
-        String bodyOfResponse = "Attaching nodes with the provided IDs would create cycle";
+        String bodyOfResponse = "Attaching node under the provided parentId would create cycle";
         return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(value = {NoSuchElementException.class})
     protected ResponseEntity<Object> handleMissing(RuntimeException ex, WebRequest request) {
-        String bodyOfResponse = "Nothing to update with the provided IDs";
+        String bodyOfResponse = "No node with a matching ID";
         return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 

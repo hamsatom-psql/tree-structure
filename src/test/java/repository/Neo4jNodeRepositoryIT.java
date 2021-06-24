@@ -11,7 +11,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 class Neo4jNodeRepositoryIT {
@@ -67,11 +66,6 @@ class Neo4jNodeRepositoryIT {
     void saveNode_duplicate() throws SQLException {
         repository.saveNode("root", null);
         Assertions.assertThrows(ClientException.class, () -> repository.saveNode("root", null));
-    }
-
-    @Test
-    void saveNode_invalidParent() {
-        Assertions.assertThrows(NoSuchElementException.class, () -> repository.saveNode("root", "missing"));
     }
 
     @Test
@@ -151,6 +145,7 @@ class Neo4jNodeRepositoryIT {
         repository.saveNode("2", "1");
         repository.saveNode("3", "2");
         Assertions.assertThrows(RuntimeException.class, () -> repository.updateNodeParent("2", "3"));
+        testDescendants("1", "2", 2, "3");
     }
 
     @Test
@@ -159,7 +154,7 @@ class Neo4jNodeRepositoryIT {
         repository.saveNode("2", "1");
         repository.detachFromParent("2");
         testDescendants("1", "1", 0);
-        testDescendants("2", "2", 0);
+        Assertions.assertTrue(repository.exists("2"));
     }
 
     @Test
@@ -171,5 +166,16 @@ class Neo4jNodeRepositoryIT {
         repository.updateNodeParent("1", "3");
         testDescendants("3", "3", 1, "1");
         testDescendants("3", "1", 2, "2");
+    }
+
+    @Test
+    void exists() throws SQLException {
+        repository.saveNode("node", null);
+        Assertions.assertTrue(repository.exists("node"));
+    }
+
+    @Test
+    void exists_missing() throws SQLException {
+        Assertions.assertFalse(repository.exists("gone"));
     }
 }

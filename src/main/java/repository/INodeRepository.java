@@ -10,6 +10,8 @@ import java.util.List;
 public interface INodeRepository {
     void saveNode(@Nonnull String nodeId, @Nullable String parentId) throws SQLException;
 
+    boolean exists(@Nonnull String id) throws SQLException;
+
     @Nonnull
     List<Node> selectDescendants(@Nonnull String parentId) throws SQLException;
 

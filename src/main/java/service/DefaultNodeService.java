@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class DefaultNodeService implements INodeService {
@@ -28,6 +29,9 @@ public class DefaultNodeService implements INodeService {
             throw new IllegalArgumentException("Same node and parent id " + nodeId);
         }
         try {
+            if (parentId != null && !repository.exists(parentId)) {
+                throw new NoSuchElementException("No node with id " + parentId);
+            }
             repository.saveNode(nodeId, parentId);
         } catch (ClientException e) {
             throw new DuplicateIdException("Duplicate id " + nodeId, e);
@@ -39,8 +43,10 @@ public class DefaultNodeService implements INodeService {
     @Nonnull
     @Override
     public List<Node> getDescendants(@Nonnull String parentId) {
-        // TODO FIXME maybe check that parentId is persisted
         try {
+            if (!repository.exists(parentId)) {
+                throw new NoSuchElementException("No node with id " + parentId);
+            }
             return repository.selectDescendants(parentId);
         } catch (SQLException throwables) {
             throw new IllegalStateException("Generic database error", throwables);
@@ -52,11 +58,16 @@ public class DefaultNodeService implements INodeService {
         if (nodeId.equals(newParentId)) {
             throw new IllegalArgumentException("Same node and parent id " + nodeId);
         }
-        // TODO FIXME maybe check that both nodes exist
         try {
+            if (!repository.exists(nodeId)) {
+                throw new NoSuchElementException("No node with id " + nodeId);
+            }
             if (newParentId == null) {
                 repository.detachFromParent(nodeId);
             } else {
+                if (!repository.exists(newParentId)) {
+                    throw new NoSuchElementException("No node with id " + newParentId);
+                }
                 repository.updateNodeParent(nodeId, newParentId);
             }
         } catch (SQLException throwables) {
