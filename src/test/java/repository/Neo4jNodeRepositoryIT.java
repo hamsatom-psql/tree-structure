@@ -1,48 +1,21 @@
 package repository;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import model.Node;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.v1.exceptions.ClientException;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-class Neo4jNodeRepositoryIT {
-    private static DataSource neo4j;
+class Neo4jNodeRepositoryIT extends AbstractNodeIT {
     private Neo4jNodeRepository repository;
-
-    @BeforeAll
-    static void beforeAll() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:neo4j:bolt://localhost:7777/?user=neo4j,password=test,scheme=basic");
-        neo4j = new HikariDataSource(config);
-    }
 
     @BeforeEach
     void setUp() throws SQLException {
         repository = new Neo4jNodeRepository(neo4j);
-    }
-
-    @AfterEach
-    void tearDown() throws SQLException {
-        try (
-                Connection connection = neo4j.getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement("MATCH (n) DETACH DELETE n")
-        ) {
-            preparedStatement.executeUpdate();
-        }
-    }
-
-    private void nodeEquals(Node node, String parentId, String rootId, int depth) {
-        Assertions.assertEquals(parentId, node.getParentId());
-        Assertions.assertEquals(rootId, node.getRootId());
-        Assertions.assertEquals(depth, node.getDepth());
     }
 
     private void testTree(String root, String parent, int childDepth, String... leaves) throws SQLException {

@@ -96,7 +96,7 @@ public class Neo4jNodeRepository implements INodeRepository {
             preparedStatement.setString(1, parentId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            List<Node> descendants = new ArrayList<>();
+            List<Node> descendants = new ArrayList<>(); // TODO FIXME Stream download big result sets
             while (resultSet.next()) {
                 descendants.add(toNode(resultSet).setParentId(parentId));
             }
