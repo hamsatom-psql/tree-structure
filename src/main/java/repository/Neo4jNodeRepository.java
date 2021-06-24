@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Repository("neo4jNodeRepository")
 public class Neo4jNodeRepository implements INodeRepository {
@@ -45,17 +46,11 @@ public class Neo4jNodeRepository implements INodeRepository {
                 preparedStatement.executeUpdate();
             }
             if (parentId != null) {
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "MATCH (child:Node), (parent:Node) WHERE child.id = ? AND parent.id = ? CREATE (parent)-[:PARENT_OF]->(child)"
-                )) {
-                    statement.setString(1, nodeId);
-                    statement.setString(2, parentId);
-                    statement.executeUpdate();
-                }
+                attach(nodeId, parentId, connection);
             }
 
             connection.commit();
-        } catch (SQLException e) {
+        } catch (SQLException | NoSuchElementException e) {
             if (connection != null) {
                 connection.rollback();
             }
@@ -104,16 +99,19 @@ public class Neo4jNodeRepository implements INodeRepository {
             connection.setAutoCommit(false);
 
             detach(nodeId, connection);
-            try (PreparedStatement preparedStatement = connection.prepareStatement(
-                    "MATCH (child:Node), (parent:Node) WHERE child.id = ? AND parent.id = ? CREATE (parent)-[:PARENT_OF]->(child)"
+            attach(nodeId, newParentId, connection);
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "MATCH p=(n:Node {id: ?})-[:PARENT_OF*]->(n) RETURN p AS cycle"
             )) {
-                preparedStatement.setString(1, nodeId);
-                preparedStatement.setString(2, newParentId);
-                preparedStatement.executeUpdate();
+                statement.setString(1, nodeId);
+                ResultSet resultSet = statement.executeQuery();
+                if (resultSet.next()) {
+                    throw new IllegalArgumentException("Attaching " + nodeId + " to " + newParentId + " creates cycle");
+                }
             }
 
             connection.commit();
-        } catch (SQLException e) {
+        } catch (SQLException | NoSuchElementException e) {
             if (connection != null) {
                 connection.rollback();
             }
@@ -136,6 +134,18 @@ public class Neo4jNodeRepository implements INodeRepository {
         try (PreparedStatement preparedStatement = connection.prepareStatement("MATCH (:Node)-[r:PARENT_OF]->(:Node {id: ?}) DELETE r")) {
             preparedStatement.setString(1, nodeId);
             preparedStatement.executeUpdate();
+        }
+    }
+
+    private void attach(String nodeId, String parentId, Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "MATCH (child:Node), (parent:Node) WHERE child.id = ? AND parent.id = ? CREATE (parent)-[:PARENT_OF]->(child)"
+        )) {
+            statement.setString(1, nodeId);
+            statement.setString(2, parentId);
+            if (statement.executeUpdate() <= 0) {
+                throw new NoSuchElementException("Couldn't attach " + nodeId + " to " + parentId);
+            }
         }
     }
 }

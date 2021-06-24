@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 class Neo4jNodeRepositoryIT {
@@ -66,6 +67,11 @@ class Neo4jNodeRepositoryIT {
     void saveNode_duplicate() throws SQLException {
         repository.saveNode("root", null);
         Assertions.assertThrows(ClientException.class, () -> repository.saveNode("root", null));
+    }
+
+    @Test
+    void saveNode_invalidParent() {
+        Assertions.assertThrows(NoSuchElementException.class, () -> repository.saveNode("root", "missing"));
     }
 
     @Test
