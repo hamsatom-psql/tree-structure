@@ -1,6 +1,8 @@
 package service;
 
+import model.DuplicateIdException;
 import model.Node;
+import org.neo4j.driver.v1.exceptions.ClientException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import repository.INodeRepository;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -24,15 +27,24 @@ public class DefaultNodeService implements INodeService {
         if (nodeId.equals(parentId)) {
             throw new IllegalArgumentException("Same node and parent id " + nodeId);
         }
-        // TODO FIXME maybe check that id not already taken
-        repository.saveNode(nodeId, parentId);
+        try {
+            repository.saveNode(nodeId, parentId);
+        } catch (ClientException e) {
+            throw new DuplicateIdException("Duplicate id " + nodeId, e);
+        } catch (SQLException throwables) {
+            throw new IllegalStateException("Generic database error", throwables);
+        }
     }
 
     @Nonnull
     @Override
     public List<Node> getDescendants(@Nonnull String parentId) {
         // TODO FIXME maybe check that parentId is persisted
-        return repository.selectDescendants(parentId);
+        try {
+            return repository.selectDescendants(parentId);
+        } catch (SQLException throwables) {
+            throw new IllegalStateException("Generic database error", throwables);
+        }
     }
 
     @Override
@@ -41,6 +53,14 @@ public class DefaultNodeService implements INodeService {
             throw new IllegalArgumentException("Same node and parent id " + nodeId);
         }
         // TODO FIXME maybe check that both nodes exist
-        repository.updateNodeParent(nodeId, newParentId);
+        try {
+            if (newParentId == null) {
+                repository.detachFromParent(nodeId);
+            } else {
+                repository.updateNodeParent(nodeId, newParentId);
+            }
+        } catch (SQLException throwables) {
+            throw new IllegalStateException("Generic database error", throwables);
+        }
     }
 }

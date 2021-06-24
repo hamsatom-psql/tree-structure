@@ -4,15 +4,16 @@ import model.Node;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.sql.SQLException;
 import java.util.List;
 
 public interface INodeRepository {
-    void saveNode(@Nonnull String nodeId, @Nullable String parentId);
+    void saveNode(@Nonnull String nodeId, @Nullable String parentId) throws SQLException;
 
     @Nonnull
-    List<Node> selectDescendants(@Nonnull String parentId);
+    List<Node> selectDescendants(@Nonnull String parentId) throws SQLException;
 
-    void updateNodeParent(@Nonnull String nodeId, @Nonnull String newParentId);
+    void updateNodeParent(@Nonnull String nodeId, @Nonnull String newParentId) throws SQLException;
 
-    void detachFromParent(@Nonnull String nodeId);
+    void detachFromParent(@Nonnull String nodeId) throws SQLException;
 }

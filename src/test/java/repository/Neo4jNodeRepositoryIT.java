@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import model.Node;
 import org.junit.jupiter.api.*;
+import org.neo4j.driver.v1.exceptions.ClientException;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -24,7 +25,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws SQLException {
         repository = new Neo4jNodeRepository(neo4j);
     }
 
@@ -44,14 +45,14 @@ class Neo4jNodeRepositoryIT {
         Assertions.assertEquals(depth, node.getDepth());
     }
 
-    private void testTree(String root, String parent, int childDepth, String... leaves) {
+    private void testTree(String root, String parent, int childDepth, String... leaves) throws SQLException {
         for (String leaf : leaves) {
             repository.saveNode(leaf, parent);
         }
         testDescendants(root, parent, childDepth, leaves);
     }
 
-    private void testDescendants(String root, String parent, int childDepth, String... leaves) {
+    private void testDescendants(String root, String parent, int childDepth, String... leaves) throws SQLException {
         List<Node> descendants = repository.selectDescendants(parent);
         Assertions.assertEquals(leaves.length, descendants.size());
         for (String leaf : leaves) {
@@ -62,19 +63,25 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void saveNode_root() {
+    void saveNode_duplicate() throws SQLException {
+        repository.saveNode("root", null);
+        Assertions.assertThrows(ClientException.class, () -> repository.saveNode("root", null));
+    }
+
+    @Test
+    void saveNode_root() throws SQLException {
         repository.saveNode("root", null);
         testTree("root", "root", 0);
     }
 
     @Test
-    void saveNode_1level() {
+    void saveNode_1level() throws SQLException {
         repository.saveNode("root", null);
         testTree("root", "root", 1, "descendant1", "descendant2");
     }
 
     @Test
-    void saveNode_2levels() {
+    void saveNode_2levels() throws SQLException {
         repository.saveNode("root", null);
         testTree("root", "root", 1, "parent1", "parent2");
         testTree("root", "parent1", 2, "child1", "child2");
@@ -84,7 +91,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void saveNode_forest() {
+    void saveNode_forest() throws SQLException {
         repository.saveNode("root1", null);
         repository.saveNode("root2", null);
         repository.saveNode("child1", "root1");
@@ -94,13 +101,13 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void updateNodeParent_newRoot() {
+    void updateNodeParent_newRoot() throws SQLException {
         repository.saveNode("root", null);
         repository.saveNode("mid1", "root");
         repository.saveNode("mid2", "root");
         repository.saveNode("leaf1", "mid1");
         repository.saveNode("leaf2", "mid1");
-        repository.saveNode("roo2", null);
+        repository.saveNode("root2", null);
         repository.updateNodeParent("root", "root2");
         testDescendants("root2", "root2", 1, "root");
         testDescendants("root2", "root", 2, "mid1", "mid2");
@@ -108,7 +115,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void updateNodeParent_newInnerNode() {
+    void updateNodeParent_newInnerNode() throws SQLException {
         repository.saveNode("1", null);
         repository.saveNode("2", "1");
         repository.saveNode("3", "2");
@@ -117,11 +124,11 @@ class Neo4jNodeRepositoryIT {
         repository.updateNodeParent("2", "21");
         testDescendants("1", "1", 1, "21");
         testDescendants("1", "21", 2, "2");
-        testDescendants("1", "2", 3, "21");
+        testDescendants("1", "2", 3, "3");
     }
 
     @Test
-    void updateNodeParent_newLeaf() {
+    void updateNodeParent_newLeaf() throws SQLException {
         repository.saveNode("1", null);
         repository.saveNode("2", "1");
         repository.saveNode("3", "2");
@@ -133,7 +140,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void updateNodeParent_cycle() {
+    void updateNodeParent_cycle() throws SQLException {
         repository.saveNode("1", null);
         repository.saveNode("2", "1");
         repository.saveNode("3", "2");
@@ -141,7 +148,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void detachFromParent() {
+    void detachFromParent() throws SQLException {
         repository.saveNode("1", null);
         repository.saveNode("2", "1");
         repository.detachFromParent("2");
@@ -150,7 +157,7 @@ class Neo4jNodeRepositoryIT {
     }
 
     @Test
-    void detachFromParent_existingToRoot() {
+    void detachFromParent_existingToRoot() throws SQLException {
         repository.saveNode("1", null);
         repository.saveNode("2", "1");
         repository.saveNode("3", "2");
