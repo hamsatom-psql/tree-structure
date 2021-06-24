@@ -47,7 +47,7 @@ public class RestNodeController {
     }
 
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Successfully changed node's parentId"),
+            @ApiResponse(code = 204, message = "Successfully changed node's parentId"),
             @ApiResponse(code = 400, message = "Node can't be attached under provided parentId"),
             @ApiResponse(code = 404, message = "No node for at least one of the provided ids"),
     })
